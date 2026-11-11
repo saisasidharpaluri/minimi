@@ -6,11 +6,12 @@ const prompts = [
   { number: "03", title: "Pick up the thread", description: "Continue a past decision with fresh research.", prompt: "Last Tuesday I asked you about Postgres hosting. Has any pricing changed since then?", icon: "clock" as const, tone: "sand" },
 ];
 
-export function Welcome({ onPrompt }: { onPrompt: (text: string) => void }) {
+export function Welcome({ onPrompt, onWatchDemo }: { onPrompt: (text: string) => void; onWatchDemo: () => void }) {
   return <div className="welcome-view">
     <div className="welcome-kicker"><span className="kicker-rule" /> RESEARCH, REMEMBERED</div>
     <h1>Good research<br /><em>has a memory.</em></h1>
     <p className="welcome-description">Bring a question, a decision, or an old thread. Minimi searches what’s changed and keeps the context close.</p>
+    <button className="welcome-demo-button" onClick={onWatchDemo}><span className="play-icon"><Icon name="play" size={13} /></span> Watch the 60-second tour</button>
     <div className="starter-heading"><span>Start with a thread</span><span className="starter-caption">A FEW IDEAS</span></div>
     <div className="starter-grid">
       {prompts.map((item) => <button className="starter-card" key={item.number} onClick={() => onPrompt(item.prompt)}>

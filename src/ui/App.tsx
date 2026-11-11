@@ -23,8 +23,10 @@ export default function App() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [ready, setReady] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
+  const [showDemo, setShowDemo] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const demoVideoRef = useRef<HTMLVideoElement>(null);
   const startedRef = useRef(false);
 
   const refreshConversations = useCallback(async () => {
@@ -108,7 +110,7 @@ export default function App() {
         event.preventDefault();
         if (!busy) void newConversation();
       }
-      if (event.key === "Escape") { setDrawerOpen(false); setConfirmClear(false); }
+      if (event.key === "Escape") { setDrawerOpen(false); setConfirmClear(false); setShowDemo(false); }
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
@@ -195,13 +197,14 @@ export default function App() {
         <button className="topbar-menu icon-button" onClick={() => setDrawerOpen(true)} aria-label="Open conversation history" aria-expanded={drawerOpen}><Icon name="menu" /></button>
         <div className="topbar-context"><span className="workspace-label">MINIMI / WORKSPACE</span><span className="active-title">{activeTitle}</span></div>
         <div className={`connection-state ${configured ? "is-ready" : "is-setup-needed"}`} role="status"><span className="connection-dot" /><span>{configured ? "Web search ready" : "Setup needed"}</span></div>
+        <button className="watch-demo-button" onClick={() => setShowDemo(true)}><Icon name="play" size={13} /><span>Watch demo</span></button>
         <button className="topbar-new-chat" onClick={() => void newConversation()} disabled={!ready || busy}><Icon name="plus" size={16} /><span>New chat</span></button>
       </header>
 
       {!ready && <div className="startup-state" role="status"><span className="loading-orbit" /><p>Opening your workspace…</p></div>}
       {ready && error && !hasMessages && <div className="startup-error" role="alert"><span className="error-mark">!</span><h1>We couldn’t open Minimi.</h1><p>{error}</p><button className="secondary-button" onClick={() => window.location.reload()}>Try again</button></div>}
       {ready && !(error && !hasMessages) && <section className={`conversation-view ${hasMessages ? "has-messages" : "is-empty"}`} aria-label="Conversation">
-        {!hasMessages ? <Welcome onPrompt={choosePrompt} /> : <div className="message-list" aria-live="polite">
+        {!hasMessages ? <Welcome onPrompt={choosePrompt} onWatchDemo={() => setShowDemo(true)} /> : <div className="message-list" aria-live="polite">
           {messages.map((message) => <MessageView key={message.id} message={message} />)}
           {streamText && <MessageView message={{ id: "stream", role: "assistant", content: streamText, citations: [], createdAt: new Date().toISOString(), conversationId: activeId ?? "" }} streaming />}
           {busy && !streamText && <div className="researching-state"><span className="mini-mark"><Icon name="spark" size={14} /></span><span>Gathering context and checking the web</span><span className="typing-dots"><i /><i /><i /></span></div>}
@@ -219,6 +222,13 @@ export default function App() {
       <section className="confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby="clear-title" aria-describedby="clear-description">
         <span className="dialog-icon"><Icon name="trash" size={19} /></span><h2 id="clear-title">Clear your library?</h2><p id="clear-description">This permanently deletes every conversation saved on this device.</p>
         <div className="dialog-actions"><button className="secondary-button" onClick={() => setConfirmClear(false)}>Keep history</button><button className="danger-button" onClick={() => void clearHistory()}>Delete all</button></div>
+      </section>
+    </div>}
+    {showDemo && <div className="modal-backdrop demo-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) setShowDemo(false); }}>
+      <section className="demo-dialog" role="dialog" aria-modal="true" aria-labelledby="demo-title">
+        <header className="demo-dialog-header"><div><span className="demo-kicker">A 60-SECOND TOUR</span><h2 id="demo-title">Research, remembered.</h2></div><button className="icon-button" onClick={() => setShowDemo(false)} aria-label="Close demo"><Icon name="close" /></button></header>
+        <video ref={demoVideoRef} className="demo-video" controls autoPlay playsInline preload="metadata" poster="/minimi-demo-poster.svg"><source src="/minimi-demo.webm" type="video/webm" />Your browser does not support embedded video. <a href="/minimi-demo.webm" download>Download the Minimi demo</a>.</video>
+        <footer className="demo-dialog-footer"><span>Illustrative walkthrough · sample content</span><a href="/minimi-demo.webm" download><Icon name="download" size={14} /> Download video</a></footer>
       </section>
     </div>}
   </div>;

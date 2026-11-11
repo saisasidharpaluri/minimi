@@ -1,6 +1,6 @@
 import type { ReactNode, SVGProps } from "react";
 
-export type IconName = "menu" | "plus" | "search" | "arrow-up" | "arrow-right" | "external" | "clock" | "spark" | "lock" | "trash" | "close" | "book" | "globe";
+export type IconName = "menu" | "plus" | "search" | "arrow-up" | "arrow-right" | "external" | "clock" | "spark" | "lock" | "trash" | "close" | "book" | "globe" | "play" | "download";
 
 const shapes: Record<IconName, ReactNode> = {
   menu: <><path d="M4 7h16M4 12h16M4 17h16" /></>,
@@ -16,6 +16,8 @@ const shapes: Record<IconName, ReactNode> = {
   close: <><path d="m6 6 12 12M18 6 6 18" /></>,
   book: <><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v17H6.5A2.5 2.5 0 0 0 4 22V5.5Z" /><path d="M4 17a2.5 2.5 0 0 1 2.5-2.5H20" /></>,
   globe: <><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18" /></>,
+  play: <><path d="m8 5 12 7-12 7V5Z" /></>,
+  download: <><path d="M12 3v12m-5-5 5 5 5-5" /><path d="M5 17v3h14v-3" /></>,
 };
 
 export function Icon({ name, size = 18, ...props }: SVGProps<SVGSVGElement> & { name: IconName; size?: number }) {

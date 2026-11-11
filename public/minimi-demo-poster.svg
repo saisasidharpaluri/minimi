@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <rect width="1280" height="720" fill="#f6f5f0"/>
+  <rect x="118" y="74" width="1044" height="572" rx="22" fill="#fffefa" stroke="#deddd4"/>
+  <path d="M140 74h1000a22 22 0 0 1 22 22v58H118V96a22 22 0 0 1 22-22Z" fill="#f1f0e9"/>
+  <circle cx="150" cy="107" r="5" fill="#d1cfc4"/><circle cx="169" cy="107" r="5" fill="#d1cfc4"/><circle cx="188" cy="107" r="5" fill="#d1cfc4"/>
+  <text x="216" y="114" fill="#52624f" font-family="Georgia,serif" font-size="22" font-weight="bold">minimi</text>
+  <text x="170" y="225" fill="#84877e" font-family="Arial,sans-serif" font-size="13" letter-spacing="3">RESEARCH, REMEMBERED</text>
+  <text x="166" y="318" fill="#282d28" font-family="Georgia,serif" font-size="68">Good research</text>
+  <text x="166" y="391" fill="#3e694c" font-family="Georgia,serif" font-size="68" font-style="italic">has a memory.</text>
+  <text x="170" y="440" fill="#777c73" font-family="Arial,sans-serif" font-size="18">A 60-second tour of web research and conversation memory.</text>
+  <circle cx="640" cy="548" r="34" fill="#3e694c"/><path d="m631 532 24 16-24 16Z" fill="#fffefa"/>
+</svg>
