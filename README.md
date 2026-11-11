@@ -25,7 +25,7 @@ Open [http://localhost:3000](http://localhost:3000). The model defaults to `gpt-
 - Saves conversation messages locally in `data/minimi.sqlite`. A SQLite inverted term index supports relevant history recall without depending on provider-side conversation storage or a native SQLite package.
 - Interprets date references using the browser's IANA timezone. The exact date is passed with matching history to the model for recall and follow-up research.
 - Keeps one local user's conversations. Use **Clear history** to delete them from this device.
-- Includes a captioned [60-second product tour](public/minimi-demo.webm); open **Watch demo** in the app to play it or download it. The tour is illustrative and does not need an API key.
+- Includes a narrated, captioned [60-second product tour](public/minimi-demo.webm); open **Watch demo** in the app to play it or download it. The tour is illustrative and does not need an API key. Its narration source is in scripts/minimi-demo-narration.wav, with the local Windows voice generation script beside it.
 
 ## Development
 
