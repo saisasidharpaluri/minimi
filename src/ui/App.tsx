@@ -1,6 +1,7 @@
 import { FormEvent, KeyboardEvent, useCallback, useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import type { Citation, Conversation, Message } from "../../server/store.js";
+import { addInlineCitations } from "../shared/citations.js";
 
 const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
 type StreamEvent = { type: "delta" | "complete" | "error"; text?: string; citations?: Citation[]; error?: string };
@@ -99,6 +100,7 @@ export default function App() {
       const decoder = new TextDecoder();
       let buffer = "";
       let answer = "";
+      let completed = false;
       let citations: Citation[] = [];
       let failed = "";
       while (true) {
@@ -116,12 +118,13 @@ export default function App() {
           } else if (message.type === "complete") {
             answer = message.text ?? answer;
             citations = message.citations ?? [];
+            completed = true;
           } else if (message.type === "error") failed = message.error ?? "The response failed.";
         }
         if (done) break;
       }
       if (failed) throw new Error(failed);
-      if (!answer) throw new Error("The model returned an empty answer.");
+      if (!completed || !answer) throw new Error(answer ? "The connection ended before the answer completed. Try again." : "The model returned an empty answer.");
       const assistant: Message = { id: crypto.randomUUID(), conversationId: activeId, role: "assistant", content: answer, citations, createdAt: new Date().toISOString() };
       setMessages((current) => [...current, assistant]);
       setStreamText("");
@@ -201,7 +204,7 @@ function MessageView({ message, streaming = false }: { message: Message; streami
     <div className="message-content">
       {!user && <div className="message-label">MINIMI <span>·</span> {streaming ? "THINKING" : "RESEARCH PARTNER"}</div>}
       <div className={`bubble ${user ? "user-bubble" : "assistant-bubble"}`}>
-        <ReactMarkdown components={{ a: ({ href, children }) => <a href={href} target="_blank" rel="noreferrer noopener">{children}</a> }}>{message.content}</ReactMarkdown>
+        <ReactMarkdown components={{ a: ({ href, children }) => <a href={href} target="_blank" rel="noreferrer noopener">{children}</a> }}>{addInlineCitations(message.content, message.citations ?? [])}</ReactMarkdown>
         {streaming && <span className="cursor" />}
       </div>
       {!!message.citations?.length && <div className="sources"><div className="sources-label"><span>↗</span> SOURCES</div><div className="source-list">{message.citations.map((citation, index) => <a key={`${citation.url}-${index}`} href={citation.url} target="_blank" rel="noreferrer noopener"><span className="source-number">{index + 1}</span><span>{citation.title || citation.url}</span><span className="external">↗</span></a>)}</div></div>}

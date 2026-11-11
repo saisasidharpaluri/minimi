@@ -44,16 +44,18 @@ app.post("/api/chat", async (req, res) => {
   res.setHeader("Connection", "keep-alive");
   res.flushHeaders();
   const send = (event: unknown) => res.write(`data: ${JSON.stringify(event)}\n\n`);
+  const controller = new AbortController();
+  res.on("close", () => { if (!res.writableEnded) controller.abort(); });
   try {
     const agent = new ChatAgent(createOpenAIClient(process.env.OPENAI_API_KEY), store, process.env.OPENAI_MODEL ?? "gpt-6-astra");
-    for await (const event of agent.reply({ conversationId, text: text.trim(), timeZone: typeof timeZone === "string" ? timeZone : "UTC" })) {
+    for await (const event of agent.reply({ conversationId, text: text.trim(), timeZone: typeof timeZone === "string" ? timeZone : "UTC", signal: controller.signal })) {
       send(event);
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : "The request failed.";
-    send({ type: "error", error: message });
+    if (!res.destroyed) send({ type: "error", error: message });
   }
-  res.end();
+  if (!res.destroyed) res.end();
 });
 
 if (process.env.NODE_ENV === "production") {

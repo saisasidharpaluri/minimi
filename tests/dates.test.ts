@@ -34,3 +34,11 @@ test("local dates convert to UTC ranges across zones and daylight-saving changes
   assert.equal(dstDay.from, "2026-03-08T08:00:00.000Z");
   assert.equal(dstDay.to, "2026-03-09T07:00:00.000Z");
 });
+
+test("this weekday uses the current local Monday-to-Sunday week and rejects invalid dates", () => {
+  const monday = new Date("2026-11-09T12:00:00.000Z");
+  assert.equal(interpretDateQuery("this Friday", monday, "UTC")?.from, "2026-11-13");
+  assert.equal(interpretDateQuery("on 31 February", monday, "UTC"), null);
+  assert.equal(interpretDateQuery("on 2026-02-31", monday, "UTC"), null);
+  assert.equal(interpretDateQuery("On Monday we shortlisted products", new Date("2026-11-11T12:00:00.000Z"), "UTC")?.from, "2026-11-09");
+});

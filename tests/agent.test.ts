@@ -3,11 +3,12 @@ import test from "node:test";
 import { ChatAgent, extractCitations, type ResponsesClient } from "../server/agent.js";
 import { ChatStore } from "../server/store.js";
 
-function fixtureClient(answer: string, citations: Array<{ url: string; title: string }> = [], capture?: (input: Record<string, unknown>) => void): ResponsesClient {
+function fixtureClient(answer: string, citations: Array<{ url: string; title: string }> = [], capture?: (input: Record<string, unknown>) => void, captureOptions?: (options: { signal?: AbortSignal } | undefined) => void): ResponsesClient {
   return {
     responses: {
-      async create(input) {
+      async create(input, options) {
         capture?.(input);
+        captureOptions?.(options);
         const response = {
           output: [{ type: "message", content: [{ type: "output_text", text: answer, annotations: citations.map((citation) => ({ type: "url_citation", ...citation })) }] }],
         };
@@ -20,19 +21,27 @@ function fixtureClient(answer: string, citations: Array<{ url: string; title: st
   };
 }
 
-async function run(agent: ChatAgent, conversationId: string, text: string) {
+async function run(agent: ChatAgent, conversationId: string, text: string, signal?: AbortSignal) {
   const events = [];
-  for await (const event of agent.reply({ conversationId, text, timeZone: "UTC" })) events.push(event);
+  for await (const event of agent.reply({ conversationId, text, timeZone: "UTC", signal })) events.push(event);
   return events;
 }
 
 test("ordinary chat streams and persists a concise answer", async () => {
   const store = new ChatStore(":memory:");
   store.createConversation("c1", "Question");
-  const agent = new ChatAgent(fixtureClient("A concise answer."), store, "gpt-6-astra");
-  const events = await run(agent, "c1", "Explain what a database index does.");
+  store.addMessage({ id: "user-1", conversationId: "c1", role: "user", content: "Explain what a database index does.", citations: [], createdAt: "2026-11-11T12:00:00.000Z" });
+  let captured: Record<string, unknown> | undefined;
+  let capturedSignal: AbortSignal | undefined;
+  const agent = new ChatAgent(fixtureClient("A concise answer.", [], (input) => { captured = input; }, (options) => { capturedSignal = options?.signal; }), store, "gpt-6-astra", () => new Date("2026-11-11T12:00:00.000Z"));
+  const controller = new AbortController();
+  const events = await run(agent, "c1", "Explain what a database index does.", controller.signal);
   assert.deepEqual(events.map((event) => event.type), ["delta", "complete"]);
   assert.equal(store.getMessages("c1").at(-1)?.content, "A concise answer.");
+  assert.deepEqual(captured?.tools, [{ type: "web_search" }]);
+  assert.match(String(captured?.input), /Current local date: 2026-11-11/);
+  assert.equal(capturedSignal, controller.signal);
+  assert.equal(store.recallMemories("database index")[0]?.question, "Explain what a database index does.");
   store.close();
 });
 
@@ -59,7 +68,7 @@ test("follow-up retains shortlisted products and returns fresh citations", async
   const agent = new ChatAgent(client, store, "gpt-6-astra");
   const events = await run(agent, "c1", "Have any of them changed pricing since then?");
   assert.match(String(captured?.input), /HubSpot and Pipedrive/);
-  assert.deepEqual(events.at(-1)?.citations, [{ url: "https://www.pipedrive.com/pricing", title: "Pipedrive pricing" }]);
+  assert.deepEqual(events.at(-1)?.citations, [{ url: "https://www.pipedrive.com/pricing", title: "Pipedrive pricing", startIndex: undefined, endIndex: undefined }]);
   assert.equal(store.getMessages("c1").at(-1)?.citations[0]?.url, "https://www.pipedrive.com/pricing");
   store.close();
 });
@@ -70,5 +79,5 @@ test("citation extraction ignores invalid URLs and deduplicates sources", () => 
     { type: "url_citation", url: "https://example.com/a", title: "Duplicate" },
     { type: "url_citation", url: "javascript:alert(1)", title: "Bad" },
   ] }] }] });
-  assert.deepEqual(citations, [{ url: "https://example.com/a", title: "Example" }]);
+  assert.deepEqual(citations, [{ url: "https://example.com/a", title: "Example", startIndex: undefined, endIndex: undefined }]);
 });

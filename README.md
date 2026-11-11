@@ -30,10 +30,11 @@ Open [http://localhost:3000](http://localhost:3000). The model defaults to `gpt-
 
 ```bash
 npm test
+npm run eval
 npm run build
 ```
 
-The tests use an in-memory database and a mocked model stream; they do not require an API key or make web requests.
+The tests use an in-memory database and a mocked model stream; they do not require an API key or make web requests. `npm run eval` runs a 30-query memory retrieval benchmark against a fixed multi-chat corpus and reports Recall@6 plus exact-date recall. It is deterministic and does not call the model or upload conversation data.
 
 ## Configuration
 

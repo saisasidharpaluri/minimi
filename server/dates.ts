@@ -9,6 +9,11 @@ export function localDateAt(instant: Date, timeZone: string): string {
   return `${values.year}-${values.month}-${values.day}`;
 }
 
+function isValidDate(date: string): boolean {
+  const parsed = new Date(`${date}T00:00:00.000Z`);
+  return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === date;
+}
+
 export function interpretDateQuery(
   text: string,
   now: Date,
@@ -26,6 +31,7 @@ export function interpretDateQuery(
   const iso = lower.match(/\b(20\d{2})-(\d{1,2})-(\d{1,2})\b/);
   if (iso) {
     const date = `${iso[1]}-${iso[2].padStart(2, "0")}-${iso[3].padStart(2, "0")}`;
+    if (!isValidDate(date)) return null;
     return { from: date, to: date, label: date };
   }
 
@@ -37,6 +43,7 @@ export function interpretDateQuery(
     const targetDay = Number(named[1]);
     if (!named[3] && monthIndex > month) targetYear -= 1;
     const date = `${targetYear}-${String(monthIndex).padStart(2, "0")}-${String(targetDay).padStart(2, "0")}`;
+    if (!isValidDate(date)) return null;
     return { from: date, to: date, label: date };
   }
 
@@ -48,13 +55,30 @@ export function interpretDateQuery(
       const weekdays = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
       const currentWeekday = new Date(todayUtc).getUTCDay();
       const targetWeekday = weekdays.indexOf(relative[2]);
+      if (relative[1] === "this") {
+        const daysFromMonday = (currentWeekday + 6) % 7;
+        const targetFromMonday = (targetWeekday + 6) % 7;
+        todayUtc.setUTCDate(todayUtc.getUTCDate() - daysFromMonday + targetFromMonday);
+        const date = todayUtc.toISOString().slice(0, 10);
+        return { from: date, to: date, label: date };
+      }
       offset = (currentWeekday - targetWeekday + 7) % 7;
       if (relative[1] === "last" && offset === 0) offset = 7;
-      if (relative[1] === "this" && offset === 0) offset = 0;
-      if (relative[1] === "this" && offset > currentWeekday) offset = (currentWeekday - targetWeekday + 7) % 7;
     }
     todayUtc.setUTCDate(todayUtc.getUTCDate() - offset);
     const date = todayUtc.toISOString().slice(0, 10);
+    return { from: date, to: date, label: date };
+  }
+
+  const bareWeekday = lower.match(/\b(?:on\s+)?(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b(?!\.com)/);
+  if (bareWeekday) {
+    const weekdays = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+    const currentWeekday = new Date(Date.UTC(year, month - 1, day)).getUTCDay();
+    const targetWeekday = weekdays.indexOf(bareWeekday[1]);
+    const offset = (currentWeekday - targetWeekday + 7) % 7;
+    const target = new Date(Date.UTC(year, month - 1, day));
+    target.setUTCDate(target.getUTCDate() - offset);
+    const date = target.toISOString().slice(0, 10);
     return { from: date, to: date, label: date };
   }
 
