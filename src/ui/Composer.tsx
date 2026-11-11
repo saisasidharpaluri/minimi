@@ -13,7 +13,7 @@ type Props = {
 
 export function Composer({ value, ready, configured, busy, textareaRef, onChange, onSubmit }: Props) {
   function onKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
-    if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); onSubmit(); }
+    if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); onSubmit(); }
   }
   return <div className="composer-region">
     {!configured && <div className="setup-card" role="status">

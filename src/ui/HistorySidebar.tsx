@@ -14,18 +14,19 @@ type Props = {
 
 function groupConversations(items: Conversation[]): Array<[string, Conversation[]]> {
   const now = new Date();
-  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-  const day = 86400000;
+  const localDayNumber = (date: Date) => Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / 86400000;
+  const today = localDayNumber(now);
   const groups = new Map<string, Conversation[]>();
   for (const item of items) {
-    const elapsed = startOfToday - new Date(item.updatedAt).getTime();
-    const key = elapsed < day ? "Today" : elapsed < day * 2 ? "Yesterday" : elapsed < day * 7 ? "Previous 7 days" : "Earlier";
+    const ageInDays = today - localDayNumber(new Date(item.updatedAt));
+    const key = ageInDays <= 0 ? "Today" : ageInDays === 1 ? "Yesterday" : ageInDays < 7 ? "Previous 7 days" : "Earlier";
     groups.set(key, [...(groups.get(key) ?? []), item]);
   }
   return [...groups.entries()];
 }
 
 export function HistorySidebar({ conversations, activeId, open, onClose, onNewChat, onSelect, onClear, clearingAvailable }: Props) {
+  const shortcut = /Mac|iPhone|iPad/.test(navigator.platform) ? "⌘ K" : "Ctrl K";
   return <>
     <button className={open ? "drawer-scrim is-visible" : "drawer-scrim"} onClick={onClose} aria-label="Close conversation history" tabIndex={open ? 0 : -1} />
     <aside className={open ? "sidebar is-open" : "sidebar"} aria-label="Minimi workspace">
@@ -33,7 +34,7 @@ export function HistorySidebar({ conversations, activeId, open, onClose, onNewCh
         <a href="/" className="brand-lockup" aria-label="Minimi home"><span className="brand-mark"><Icon name="spark" size={18} /></span><span className="brand-word">minimi</span></a>
         <button className="icon-button sidebar-close" onClick={onClose} aria-label="Close history"><Icon name="close" /></button>
       </div>
-      <button className="new-chat-button" onClick={onNewChat}><Icon name="plus" size={17} /><span>New conversation</span><kbd>⌘ K</kbd></button>
+      <button className="new-chat-button" onClick={onNewChat}><Icon name="plus" size={17} /><span>New conversation</span><kbd>{shortcut}</kbd></button>
       <div className="history-title-row"><span>YOUR LIBRARY</span><span className="history-count">{conversations.length}</span></div>
       <nav className="history-list" aria-label="Saved conversations">
         {groupConversations(conversations).map(([label, entries]) => <section className="history-group" key={label}>
